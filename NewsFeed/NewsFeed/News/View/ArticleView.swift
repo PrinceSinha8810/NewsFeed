@@ -10,29 +10,18 @@ import SwiftUI
 struct ArticleView: View {
     let article: Article
     let width: CGFloat
+    let imageLoader: ImageManager = ImageManagerBuilder()
+    
     var body: some View {
             VStack {
-                AsyncImage(url: article.imageSourceURL) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: width - 20,
-                               height: 250)
-                        .clipShape(
-                            RoundedRectangle(cornerRadius: 15)
-                        )
-                        .clipped()
-                        .shadow(radius: 4)
-                } placeholder: {
-                    Image(.img)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: width - 20,
-                                height: 250)
-                         .clipShape(
-                             RoundedRectangle(cornerRadius: 15)
-                         )
-                    
+                if let image = imageLoader.image {
+                    ImageView(image: image,
+                              size: .init(width: width - 20,
+                                          height: 250))
+                } else {
+                    ImageView(image: UIImage(resource: .img),
+                              size: .init(width: width - 20,
+                                          height: 250))
                 }
                 VStack(spacing: 8) {
                     Text(article.content ?? "")
@@ -48,9 +37,34 @@ struct ArticleView: View {
                 
             }
             .padding(.horizontal, 10)
+            .onAppear {
+                if let imageURL = article.imageSourceURL {
+                    imageLoader.loadImage(url: imageURL)
+                }
+            }
+            .onDisappear {
+                imageLoader.cancel()
+            }
     }
 }
 
 #Preview {
     ArticleView(article: Article.defaultItem, width: 400)
+}
+
+struct ImageView: View {
+    let image: UIImage
+    var radius: CGFloat =  15
+    let size: CGSize
+    
+    var body: some View {
+        Image(uiImage: image)
+            .resizable()
+            .scaledToFill()
+            .frame(width:size.width,
+                   height: size.height)
+             .clipShape(
+                 RoundedRectangle(cornerRadius: radius)
+             )
+    }
 }
