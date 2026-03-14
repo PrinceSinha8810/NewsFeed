@@ -8,18 +8,18 @@
 import Foundation
 
 protocol NewsArticleRepository {
-    func getNewArticles() async throws -> NewsResponse
+    func getNewArticles(page number: Int) async throws -> NewsResponse
 }
 
 final class NewsArticleRequestRepositry: NewsArticleRepository {
     
     let networkManager: NetworkBuilder
-    
+    let pageItemLimit: Int = 20
     init(networkManager: NetworkBuilder = NetworkManager()) {
         self.networkManager = networkManager
     }
     
-    func getNewArticles() async throws -> NewsResponse {
-        try await networkManager.fetchRequest(for: NewsArticleEndpoint.articles(pageNumber: 1, limit: 20))
+    func getNewArticles(page number: Int) async throws -> NewsResponse {
+        try await networkManager.fetchRequest(for: NewsArticleEndpoint.articles(pageNumber: number, limit: pageItemLimit))
     }
 }
