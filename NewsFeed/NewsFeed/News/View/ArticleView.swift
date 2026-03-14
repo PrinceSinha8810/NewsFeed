@@ -11,6 +11,7 @@ struct ArticleView: View {
     let article: Article
     let width: CGFloat
     let imageLoader: ImageManager = ImageManagerBuilder()
+    @Environment(\.displayScale) var scale
     
     var body: some View {
             VStack {
@@ -19,9 +20,14 @@ struct ArticleView: View {
                               size: .init(width: width - 20,
                                           height: 250))
                 } else {
-                    ImageView(image: UIImage(resource: .img),
-                              size: .init(width: width - 20,
-                                          height: 250))
+//                    ImageView(image: UIImage(resource: .img),
+//                              size: .init(width: width - 20,
+//                                          height: 250))
+                    Rectangle().fill(.secondary)
+                        .frame(width: width - 20,
+                               height: 250)
+                        .shimmering()
+                    
                 }
                 VStack(spacing: 8) {
                     Text(article.content ?? "")
@@ -39,7 +45,9 @@ struct ArticleView: View {
             .padding(.horizontal, 10)
             .onAppear {
                 if let imageURL = article.imageSourceURL {
-                    imageLoader.loadImage(url: imageURL)
+                    imageLoader.loadImage(url: imageURL,
+                                          size: .init(width: width - 20, height: 250),
+                                          scale: scale)
                 }
             }
             .onDisappear {

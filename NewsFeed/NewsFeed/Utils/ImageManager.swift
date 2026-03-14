@@ -6,10 +6,11 @@
 //
 
 import UIKit
+import ImageIO
 
 protocol ImageManager {
     var image: UIImage? { get }
-    func loadImage(url: URL)
+    func loadImage(url: URL, size: CGSize, scale: CGFloat)
     func cancel()
 }
 
@@ -26,7 +27,7 @@ final class ImageManagerBuilder: ImageManager {
     
     private var loadTask: Task<Void, Never>?
     
-    func loadImage(url: URL) {
+    func loadImage(url: URL, size: CGSize, scale: CGFloat) {
         if let cacheImage = Self.cache.object(forKey: url.absoluteString as NSString) {
             image = cacheImage
             return
@@ -41,7 +42,9 @@ final class ImageManagerBuilder: ImageManager {
                 let imageData = try await imageDownloader.loadImageData(url: url)
                 guard !Task.isCancelled else { return }
                 
-                if let image = UIImage(data: imageData) {
+                if let image = downsample(data: imageData,
+                                          to: size,
+                                          scale: scale) {
                     Self.cache.setObject(image, forKey: url.absoluteString as NSString)
                     await MainActor.run {
                         self.image = image
@@ -57,6 +60,29 @@ final class ImageManagerBuilder: ImageManager {
     func cancel() {
         loadTask?.cancel()
         loadTask = nil
+    }
+    
+    private func downsample(data: Data, to pointSize: CGSize, scale: CGFloat) -> UIImage? {
+        let maxDimension = max(pointSize.width, pointSize.height) * scale
+
+        let sourceOptions: [CFString: Any] = [
+            kCGImageSourceShouldCache: false
+        ]
+        guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions as CFDictionary) else {
+            return nil
+        }
+
+        let downsampleOptions: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxDimension
+        ]
+
+        guard let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, downsampleOptions as CFDictionary) else {
+            return nil
+        }
+        return UIImage(cgImage: cgImage)
     }
 }
 

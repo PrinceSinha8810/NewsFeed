@@ -38,7 +38,7 @@ enum NewsArticleEndpoint: Endpoint {
     var queryItems: [URLQueryItem]? {
         switch self {
         case .articles(let page, let limit):
-            [.init(name: "q", value: "all"),
+            [.init(name: "q", value: "Sports"),
              .init(name: "apiKey", value: apiKey),
              .init(name: "pageSize", value: "\(limit)"),
              .init(name: "page", value: "\(page)")]
