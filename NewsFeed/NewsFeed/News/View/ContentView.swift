@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-
+@MainActor
 struct ContentView: View {
     
     @State private var viewModel: NewsFeedViewModel = .init()
@@ -20,7 +20,8 @@ struct ContentView: View {
                 case .loading:
                     ProgressView()
                 case .success(let t):
-                    ArticleList(articles: t)
+                    ArticleList(articles: t,
+                                viewModel: viewModel)
                 case .empty:
                     EmptyView()
                 case .failure(let networkError):
@@ -46,6 +47,9 @@ struct ContentView: View {
             }
             .task {
                 await viewModel.fetchNewsArticles()
+            }
+            .onDisappear {
+                viewModel.cancel()
             }
         }
     }
