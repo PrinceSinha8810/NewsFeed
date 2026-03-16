@@ -8,7 +8,7 @@
 import Foundation
 
 protocol NewsArticleRepository {
-    func getNewArticles(page number: Int) async throws -> NewsResponse
+    func getNewArticles(page number: Int, category: String) async throws -> NewsResponse
 }
 
 final class NewsArticleRequestRepositry: NewsArticleRepository {
@@ -19,7 +19,7 @@ final class NewsArticleRequestRepositry: NewsArticleRepository {
         self.networkManager = networkManager
     }
     
-    func getNewArticles(page number: Int) async throws -> NewsResponse {
-        try await networkManager.fetchRequest(for: NewsArticleEndpoint.articles(pageNumber: number, limit: pageItemLimit))
+    func getNewArticles(page number: Int, category: String) async throws -> NewsResponse {
+        try await networkManager.fetchRequest(for: NewsArticleEndpoint.articles(pageNumber: number, limit: pageItemLimit, q: category))
     }
 }

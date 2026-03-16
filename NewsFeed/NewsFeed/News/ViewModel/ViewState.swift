@@ -14,3 +14,12 @@ enum ViewState<T> {
     case empty
     case failure(NetworkError)
 }
+extension ViewState {
+    var getItem: T? {
+        if case let .success(t) = self {
+            return t
+        } else {
+            return nil
+        }
+    }
+}

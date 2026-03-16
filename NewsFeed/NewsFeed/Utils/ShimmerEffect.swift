@@ -8,33 +8,70 @@
 import SwiftUI
 
 struct ShimmerEffect: ViewModifier {
-
+    
+    /// Base tint keeps placeholders visible between passes.
+    var baseTint: Color = .secondary.opacity(0.18)
+    /// Bright streak colour.
+    var highlight: Color = .white.opacity(0.65)
+    /// How wide the bright band is relative to the longest side.
+    var bandRatio: CGFloat = 0.45
+    /// Seconds per pass; lower is faster.
+    var speed: TimeInterval = 2
+    /// A slight tilt keeps movement from feeling robotic.
+    var angle: Angle = .degrees(18)
+    
     @State private var phase: CGFloat = 0
     
     func body(content: Content) -> some View {
         content
             .overlay {
-                ZStack {
-                    Rectangle().fill(Color.secondary)
+                GeometryReader { proxy in
+                    let width = proxy.size.width
+                    let height = proxy.size.height
+                    let bandWidth = max(width, height) * bandRatio
                     
-                    LinearGradient(gradient: Gradient(stops: [Gradient.Stop.init(color: .secondary,
-                                                                                 location: phase),
-                                                              Gradient.Stop(color: .primary.opacity(0.5), location: phase + 0.1),
-                                                              Gradient.Stop.init(color: .secondary,
-                                                                                 location: phase + 0.2)]),
-                                   startPoint: .leading,
-                                   endPoint: .trailing)
-                    .mask(content)
-                    .animation(Animation.linear(duration: 1.5).repeatForever(autoreverses: false), value: phase)
+                    // Push start far left and end far right to avoid clipping at trailing edge.
+                    let span = (width * 2.5) + bandWidth
+                    let xOffset = -(span * 0.6) + (span * phase)
+                    
+                    LinearGradient(
+                        colors: [baseTint, highlight, baseTint],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: bandWidth * 2.5, height: height * 2.8)
+                    .offset(x: xOffset)
+                    .clipped()
                 }
             }
+            .background(baseTint)
+            .mask(content)
             .onAppear {
-                phase = 1.0
+                phase = 0
+                withAnimation(.linear(duration: speed).repeatForever(autoreverses: false)) {
+                    phase = 1
+                }
             }
     }
 }
+
 extension View {
-    func shimmering() -> some View {
-        self.modifier(ShimmerEffect())
+    /// Adds a shimmering placeholder pass with tweakable feel.
+    func shimmering(
+        baseTint: Color = .secondary.opacity(0.18),
+        highlight: Color = .white.opacity(0.65),
+        bandRatio: CGFloat = 0.45,
+        speed: TimeInterval = 2,
+        angle: Angle = .degrees(18)
+    ) -> some View {
+        modifier(
+            ShimmerEffect(
+                baseTint: baseTint,
+                highlight: highlight,
+                bandRatio: bandRatio,
+                speed: speed,
+                angle: angle
+            )
+        )
     }
 }
