@@ -14,22 +14,13 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                switch viewModel.state {
-                case .idle:
-                    Color.clear
-                case .loading:
-                    ProgressView()
-                case .success(let t):
-                    ArticleList(articles: t,
-                                viewModel: viewModel)
-                case .empty:
-                    EmptyView()
-                case .failure(let networkError):
+                ArticleList(viewModel: viewModel)
+                if case let .failure(error) = viewModel.state {
                     ContentUnavailableView {
                         VStack {
                             Text("Network failure!")
                                 .font(.system(size: 20, weight: .bold))
-                            Text(networkError.localizedDescription)
+                            Text(error.localizedDescription)
                                 .font(.system(size: 15, weight: .regular))
                                 .padding(.bottom, 2)
                             Button {
@@ -44,9 +35,6 @@ struct ContentView: View {
                         }
                     }
                 }
-            }
-            .task {
-                await viewModel.fetchNewsArticles()
             }
             .onDisappear {
                 viewModel.cancel()

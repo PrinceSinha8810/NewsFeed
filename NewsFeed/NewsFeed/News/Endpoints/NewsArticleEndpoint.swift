@@ -19,7 +19,7 @@ enum AppSecretsKey {
 
 enum NewsArticleEndpoint: Endpoint {
         
-    case articles(pageNumber: Int, limit: Int)
+    case articles(pageNumber: Int, limit: Int, q: String)
     
     var baseURL: URL {
         URL(string: "https://newsapi.org")!
@@ -37,8 +37,8 @@ enum NewsArticleEndpoint: Endpoint {
 
     var queryItems: [URLQueryItem]? {
         switch self {
-        case .articles(let page, let limit):
-            [.init(name: "q", value: "Sports"),
+        case .articles(let page, let limit, let q):
+            [.init(name: "q", value: q),
              .init(name: "apiKey", value: apiKey),
              .init(name: "pageSize", value: "\(limit)"),
              .init(name: "page", value: "\(page)")]

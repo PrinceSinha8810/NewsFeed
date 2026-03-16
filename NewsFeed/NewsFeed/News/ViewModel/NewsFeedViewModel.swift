@@ -19,9 +19,19 @@ final class NewsFeedViewModel {
     private var hasMorePages = true
     private var refreshTask: Task<Void, Never>?
     
+    // Categories for filtering
+    let categories: [String] = [
+        "All", "Business", "UPSC", "Technology", "Sports", "Health", "Entertainment", "Science"
+    ]
+    var selectedCategory: String = "All"
+    
     let repository: NewsArticleRepository
     init(repository: NewsArticleRepository) {
         self.repository = repository
+        
+        Task {
+            await fetchNewsArticles()
+        }
     }
     
     convenience init() {
@@ -39,13 +49,26 @@ final class NewsFeedViewModel {
         refreshTask?.cancel()
         refreshTask = nil
     }
+    
+    func getAllArticles() -> [Article] {
+        guard case let .success(articles) = state else { return [Article.defaultItem, Article.defaultItem, Article.defaultItem] }
+        return articles
+    }
+    
+    func selectCategory(_ category: String) {
+        selectedCategory = category
+        Task {
+            await fetchNewsArticles()
+        }
+    }
+    
 }
 // MARK: - Private method
 private extension NewsFeedViewModel {
     
     func performFetchNews() async {
         do {
-            let result = try await repository.getNewArticles(page: pageNumber)
+            let result = try await repository.getNewArticles(page: pageNumber, category: selectedCategory)
             try Task.checkCancellation()
             if result.status == "ok" {
                 if result.articles.isEmpty {
@@ -89,7 +112,7 @@ extension NewsFeedViewModel {
             do {
                 defer { self.isLoadingNextPage = false }
                 self.isLoadingNextPage = true
-                let result = try await self.repository.getNewArticles(page: nextPage)
+                let result = try await self.repository.getNewArticles(page: nextPage, category: selectedCategory)
                 try Task.checkCancellation()
                 if result.status == "ok" {
                     guard !result.articles.isEmpty else {
